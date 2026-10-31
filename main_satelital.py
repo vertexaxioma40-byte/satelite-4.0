@@ -1,5 +1,6 @@
 import os
 from fastapi import FastAPI, HTTPException, UploadFile, File, Header
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import hashlib
@@ -13,10 +14,10 @@ app = FastAPI(
     version="4.0.0"
 )
 
-# Configurar middleware de CORS para permitir solicitudes web
+# Configurar middleware de CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # En producción puedes especificar tu dominio exacto
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -54,14 +55,20 @@ def chunk_file_and_hash(data: bytes, chunk_size: int = 1024 * 1024) -> tuple[str
 
 # --- ENDPOINTS DE LA API ---
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 def read_root():
-    return {
-        "sistema": "VERTEX AXIOMA®",
-        "modulo": "Ingesta Satelital & Geodefensa 4.0",
-        "estado": "Operativo - Nodos Sincronizados",
-        "protocolo": "Sello de Inmutabilidad Transfronteriza"
-    }
+    # Sirve directamente la interfaz visual 'índice.html' ubicada en el repositorio
+    try:
+        if os.path.exists("índice.html"):
+            with open("índice.html", "r", encoding="utf-8") as f:
+                return f.read()
+        elif os.path.exists("index.html"):
+            with open("index.html", "r", encoding="utf-8") as f:
+                return f.read()
+        else:
+            return "<h3>Nodo Satelital 4.0 Activo - Interfaz gráfica (índice.html) no encontrada en el directorio.</h3>"
+    except Exception as e:
+        return f"<h3>Error al cargar la interfaz: {e}</h3>"
 
 @app.post("/upstream/petrify-order/", response_model=TaskingOrderResponse)
 async def petrify_tasking_order(order: TaskingOrderRequest):
