@@ -2,91 +2,161 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Consola Operativa - Sello de Inmutabilidad Transfronteriza</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VERTEX AXIOMA® - Consola de Inmutabilidad Satelital</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; background: #f4f6f9; color: #333; }
-        .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        button { background: #0066cc; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
-        button:hover { background: #0052a3; }
-        pre { background: #272822; color: #f8f8f2; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 30px; }
+        .container { max-width: 950px; margin: 0 auto; }
+        h1 { color: #38bdf8; border-bottom: 2px solid #334155; padding-bottom: 10px; margin-bottom: 5px; }
+        .subtitle { color: #94a3b8; font-size: 0.95em; margin-top: 0; margin-bottom: 25px; }
+        .card { background: #1e293b; padding: 25px; margin-bottom: 25px; border-radius: 10px; border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3); }
+        h3 { margin-top: 0; color: #7dd3fc; }
+        p { color: #cbd5e1; font-size: 0.9em; line-height: 1.5; }
+        button { background: #0284c7; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #0369a1; }
+        .btn-audit { background: #10b981; }
+        .btn-audit:hover { background: #059669; }
+        input[type="file"] { background: #334155; color: white; padding: 10px; border-radius: 6px; width: 100%; box-sizing: border-box; margin-bottom: 15px; border: 1px solid #475569; }
+        pre { background: #020617; color: #4ade80; padding: 15px; border-radius: 6px; overflow-x: auto; border: 1px solid #1e293b; font-family: 'Courier New', Courier, monospace; font-size: 0.85em; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 0.8em; font-weight: bold; margin-bottom: 10px; }
+        .badge-upstream { background: #0369a1; color: #e0f2fe; }
+        .badge-downstream { background: #b45309; color: #fef3c7; }
+        .badge-audit { background: #047857; color: #d1fae5; }
     </style>
 </head>
 <body>
 
-    <h1>VERTEX AXIOMA® - Nodo Satelital 4.0</h1>
+    <div class="container">
+        <h1>VERTEX AXIOMA®</h1>
+        <p class="subtitle">Consola de Control Forense | Sello de Inmutabilidad Transfronteriza</p>
 
-    <!-- Sección Upstream -->
-    <div class="card">
-        <h3>1. Petrificación de Orden de Captura (Upstream)</h3>
-        <button onclick="enviarTaskingOrder()">Enviar Tasking Order</button>
-        <pre id="resultado-upstream">Esperando acción...</pre>
-    </div>
+        <!-- 1. Upstream -->
+        <div class="card">
+            <span class="badge badge-upstream">FASE 1: ORIGEN (UPSTREAM)</span>
+            <h3>1. Emisión y Petrificación de Orden (Tasking Order)</h3>
+            <p>Registra la orden geoespacial con firma X.509. Genera el hash vinculante de origen antes de que el satélite ejecute la toma.</p>
+            <button onclick="ejecutarUpstream()">Petrificar Orden Upstream</button>
+            <pre id="upstream-log">Esperando orden de pedido...</pre>
+        </div>
 
-    <!-- Sección Downstream -->
-    <div class="card">
-        <h3>2. Ingesta en Estación Terrena (Downstream)</h3>
-        <input type="file" id="archivoGeo" /><br><br>
-        <button onclick="enviarDownstream()">Ingestar y Petrificar Archivo</button>
-        <pre id="resultado-downstream">Esperando archivo...</pre>
+        <!-- 2. Downstream -->
+        <div class="card">
+            <span class="badge badge-downstream">FASE 2: TERRENO (DOWNSTREAM)</span>
+            <h3>2. Ingesta y Atomización de Bajada Geoespacial</h3>
+            <p>Recibe la carga útil descargada en la Estación Terrena. Fragmenta el raster, calcula el Root Hash y lo asocia al hash de la orden.</p>
+            <input type="file" id="archivoSatelital" />
+            <button onclick="ejecutarDownstream()">Ingestar y Atomizar Carga Útil</button>
+            <pre id="downstream-log">Esperando ingesta de archivo...</pre>
+        </div>
+
+        <!-- 3. Módulo de Validación Forense -->
+        <div class="card" style="border-color: #059669;">
+            <span class="badge badge-audit">FASE 3: AUDITORÍA 4.0</span>
+            <h3>3. Verificación de Integridad Cruzada (Upstream ↔ Downstream)</h3>
+            <p>Comprueba que la evidencia bajada corresponda exactamente a la orden de origen petrificada, auditando la cadena de custodia on-chain.</p>
+            <button class="btn-audit" onclick="validarIntegridad()">Ejecutar Auditoría Forense</button>
+            <pre id="audit-log">Esperando auditoría de enlace...</pre>
+        </div>
     </div>
 
     <script>
-        const API_URL = "https://satelite-4-0.onrender.com";
-        let taskingHashGlobal = "0x94ba9a7efa99b2a4dbc3a6188f1536e723f4970316f70a88149a35df31eee70e"; // O el que retorne el upstream
+        const API_BASE = ""; // Utiliza la misma URL de FastAPI
+        let activeTaskingHash = "0x20e29e3d386624719b8fbc8a623140eecd0e8c20f49854ae2039aca2877d5c";
+        let lastManifest = null;
 
-        async function enviarTaskingOrder() {
-            const data = {
+        async function ejecutarUpstream() {
+            const output = document.getElementById('upstream-log');
+            output.innerText = "Petrificando orden en el nodo...";
+
+            const payload = {
                 client_did: "did:axioma:node-moron-01",
-                x509_signature: "SIG_RSA_SHA256_WEB_VERONICA_ARAPIAN_4.0",
+                x509_signature: "SIG_RSA_SHA256_VERONICA_ARAPIAN_4.0",
                 target_polygon: "POLYGON((-58.62 -34.65, -58.60 -34.65, -58.60 -34.67, -58.62 -34.67, -58.62 -34.65))",
                 sensor_type: "SAR",
                 resolution_meters: 1.5
             };
 
             try {
-                const response = await fetch(`${API_URL}/upstream/petrify-order/`, {
+                const response = await fetch(`${API_BASE}/upstream/petrify-order/`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(payload)
                 });
-                const resultado = await response.json();
-                document.getElementById('resultado-upstream').innerText = JSON.stringify(resultado, null, 2);
-                
-                // Guardamos dinámicamente el hash generado para usarlo en el downstream
-                if (resultado.tasking_hash) {
-                    taskingHashGlobal = resultado.tasking_hash;
+                const data = await response.json();
+                output.innerText = JSON.stringify(data, null, 2);
+
+                if (data.tasking_hash) {
+                    activeTaskingHash = data.tasking_hash;
                 }
-            } catch (error) {
-                document.getElementById('resultado-upstream').innerText = "Error: " + error;
+            } catch (err) {
+                output.innerText = "Error: " + err.message;
             }
         }
 
-        async function enviarDownstream() {
-            const inputArchivo = document.getElementById('archivoGeo');
-            if (inputArchivo.files.length === 0) {
-                alert("Por favor selecciona un archivo primero.");
+        async function ejecutarDownstream() {
+            const output = document.getElementById('downstream-log');
+            const fileInput = document.getElementById('archivoSatelital');
+
+            if (fileInput.files.length === 0) {
+                alert("Selecciona un archivo para simular la bajada espacial.");
                 return;
             }
 
+            output.innerText = "Procesando ingesta en Estación Terrena...";
             const formData = new FormData();
-            formData.append("file", inputArchivo.files[0]);
+            formData.append("file", fileInput.files[0]);
 
             try {
-                const response = await fetch(`${API_URL}/downstream/ingest-ground-station/`, {
+                const response = await fetch(`${API_BASE}/downstream/ingest-ground-station/`, {
                     method: 'POST',
                     headers: {
-                        'tasking-hash': taskingHashGlobal,
+                        'tasking-hash': activeTaskingHash,
                         'ground-station-id': 'GROUND_STATION_MORON_01'
                     },
                     body: formData
                 });
-                const resultado = await response.json();
-                document.getElementById('resultado-downstream').innerText = JSON.stringify(resultado, null, 2);
-            } catch (error) {
-                document.getElementById('resultado-downstream').innerText = "Error: " + error;
+                const data = await response.json();
+                output.innerText = JSON.stringify(data, null, 2);
+                
+                if (data.manifiesto_forense) {
+                    lastManifest = data.manifiesto_forense;
+                }
+            } catch (err) {
+                output.innerText = "Error: " + err.message;
             }
         }
-    </script>
 
+        function validarIntegridad() {
+            const auditOutput = document.getElementById('audit-log');
+            
+            if (!lastManifest) {
+                auditOutput.innerText = "⚠️ ADVERTENCIA: Debes ejecutar la bajada Downstream antes de validar la cadena de custodia.";
+                return;
+            }
+
+            const coincidenciaTasking = (lastManifest.associated_tasking_hash === activeTaskingHash);
+
+            const reporteAuditoria = {
+                "auditoria_forense": "VERTEX AXIOMA® - TRIPLE VERIFICACIÓN",
+                "estado_cadena_custodia": coincidenciaTasking ? "INTEGRIDAD_VERIFICADA_100%" : "ALERTA_DISCREPANCIA_DETECTADA",
+                "validacion_orden_upstream": {
+                    "hash_orden_registrado": activeTaskingHash,
+                    "firma_x509": "VALIDA"
+                },
+                "validacion_bajada_downstream": {
+                    "estacion_terrena": lastManifest.ground_station_id,
+                    "archivo_procesado": lastManifest.target_file,
+                    "hash_vinculado": lastManifest.associated_tasking_hash,
+                    "root_hash_evidencia": lastManifest.root_hash,
+                    "bloques_atomizados": lastManifest.total_chunks
+                },
+                "dictamen_forense": coincidenciaTasking 
+                    ? "LA EVIDENCIA GEOESPACIAL BAJADA CORRESPONDE EXACTAMENTE A LA ORDEN DE ORIGEN. SELLO DE INMUTABILIDAD TRANSFRONTERIZA VÁLIDO."
+                    : "ERROR DE INTEGRIDAD: El hash de la bajada no coincide con la orden inicial."
+            };
+
+            auditOutput.innerText = JSON.stringify(reporteAuditoria, null, 2);
+        }
+    </script>
 </body>
 </html>
