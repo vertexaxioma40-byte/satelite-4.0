@@ -1,0 +1,11 @@
+curl -X 'POST' \
+  'https://satelite-4-0.onrender.com/upstream/petrify-order/' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "client_did": "did:axioma:node-moron-01",
+  "x509_signature": "SIG_RSA_SHA256_TEST_VERONICA_ARAPIAN_4.0",
+  "target_polygon": "POLYGON((-58.62 -34.65, -58.60 -34.65, -58.60 -34.67, -58.62 -34.67, -58.62 -34.65))",
+  "sensor_type": "SAR",
+  "resolution_meters": 1.5
+}'
