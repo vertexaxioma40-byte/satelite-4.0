@@ -1,7 +1,5 @@
 import os
-
-code = '''import os
-from fastapi import FastAPI, HTTPException, UploadFile, File, Header, Depends
+from fastapi import FastAPI, HTTPException, UploadFile, File, Header
 from pydantic import BaseModel, Field
 import hashlib
 import datetime
@@ -14,7 +12,7 @@ app = FastAPI(
     version="4.0.0"
 )
 
-# Configuración de variables de entorno (Supabase / Polygon)
+# Configuración de variables de entorno (Supabase)
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://your-supabase-url.supabase.co")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "your-service-role-key")
 
@@ -39,11 +37,8 @@ def calculate_sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 def chunk_file_and_hash(data: bytes, chunk_size: int = 1024 * 1024) -> tuple[str, list[str]]:
-    """Atomiza el archivo en bloques y genera la lista de hashes + Root Hash (Merkle Tree simplificado)"""
     chunks = [data[i:i + chunk_size] for i in range(0, len(data), chunk_size)]
     chunk_hashes = [calculate_sha256(c) for c in chunks]
-    
-    # Hash concatenado de todos los bloques
     root_hash = calculate_sha256("".join(chunk_hashes).encode('utf-8'))
     return root_hash, chunk_hashes
 
@@ -60,11 +55,6 @@ def read_root():
 
 @app.post("/upstream/petrify-order/", response_model=TaskingOrderResponse)
 async def petrify_tasking_order(order: TaskingOrderRequest):
-    """
-    1. UPSTREAM: Petrifica la orden de captura (Tasking Order) con firma X.509
-    antes de enviarse por canal cifrado al satélite.
-    """
-    # Construcción del Manifiesto Inmutable de la Orden
     raw_payload = f"{order.client_did}:{order.x509_signature}:{order.target_polygon}:{order.sensor_type}:{order.timestamp_utc}"
     tasking_hash = calculate_sha256(raw_payload.encode('utf-8'))
 
@@ -82,7 +72,6 @@ async def petrify_tasking_order(order: TaskingOrderRequest):
         }
     }
 
-    # Persistencia en Supabase (public.axioma_evidencias)
     headers = {
         "apikey": SUPABASE_KEY,
         "Authorization": f"Bearer {SUPABASE_KEY}",
@@ -91,7 +80,7 @@ async def petrify_tasking_order(order: TaskingOrderRequest):
     }
     
     try:
-        res = requests.post(
+        requests.post(
             f"{SUPABASE_URL}/rest/v1/axioma_evidencias",
             json={
                 "root_hash": petrification_data["root_hash"],
@@ -101,7 +90,7 @@ async def petrify_tasking_order(order: TaskingOrderRequest):
             headers=headers
         )
     except Exception as e:
-        print(f"Advertencia: No se pudo conectar a Supabase localmente: {e}")
+        print(f"Advertencia Supabase: {e}")
 
     return {
         "tasking_hash": f"0x{tasking_hash}",
@@ -115,15 +104,10 @@ async def ingest_sat_data(
     tasking_hash: str = Header(..., description="Hash de la orden Upstream asociada"),
     ground_station_id: str = Header(..., description="Identificador único del Nodo Terreno")
 ):
-    """
-    2. DOWNSTREAM: Intercepta la bajada en la Ground Station, demodula, atomiza en bloques
-    y sella el Root Hash en Supabase para evitar manipulaciones de caja negra.
-    """
     contents = await file.read()
     if not contents:
         raise HTTPException(status_code=400, detail="El archivo geoespacial recibido está vacío.")
 
-    # Atomización por bloques (Chunking) y Root Hash
     root_hash, chunk_hashes = chunk_file_and_hash(contents)
     timestamp_utc = datetime.datetime.utcnow().isoformat()
 
@@ -133,13 +117,12 @@ async def ingest_sat_data(
         "target_file": file.filename,
         "file_size_bytes": len(contents),
         "total_chunks": len(chunk_hashes),
-        "chunk_hashes_sample": chunk_hashes[:5],  # Muestra de los primeros bloques
+        "chunk_hashes_sample": chunk_hashes[:5],
         "root_hash": f"0x{root_hash}",
         "timestamp_utc": timestamp_utc,
         "sello": "SELLO DE INMUTABILIDAD TRANSFRONTERIZA - DOWNSTREAM"
     }
 
-    # Registro directo de evidencia en Supabase
     headers = {
         "apikey": SUPABASE_KEY,
         "Authorization": f"Bearer {SUPABASE_KEY}",
@@ -163,9 +146,3 @@ async def ingest_sat_data(
         "mensaje": "Ingesta Geoespacial Petrificada exitosamente en origen Terreno",
         "manifiesto_forense": manifest
     }
-'''
-
-with open("main_satelital.py", "w", encoding="utf-8") as f:
-    f.write(code)
-
-print("Código generado correctamente en main_satelital.py")
