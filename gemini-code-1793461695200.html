@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Consola Operativa - Sello de Inmutabilidad Transfronteriza</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f4f6f9; color: #333; }
+        .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        button { background: #0066cc; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0052a3; }
+        pre { background: #272822; color: #f8f8f2; padding: 15px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+
+    <h1>VERTEX AXIOMA® - Nodo Satelital 4.0</h1>
+
+    <!-- Sección Upstream -->
+    <div class="card">
+        <h3>1. Petrificación de Orden de Captura (Upstream)</h3>
+        <button onclick="enviarTaskingOrder()">Enviar Tasking Order</button>
+        <pre id="resultado-upstream">Esperando acción...</pre>
+    </div>
+
+    <!-- Sección Downstream -->
+    <div class="card">
+        <h3>2. Ingesta en Estación Terrena (Downstream)</h3>
+        <input type="file" id="archivoGeo" /><br><br>
+        <button onclick="enviarDownstream()">Ingestar y Petrificar Archivo</button>
+        <pre id="resultado-downstream">Esperando archivo...</pre>
+    </div>
+
+    <script>
+        const API_URL = "https://satelite-4-0.onrender.com";
+        let taskingHashGlobal = "0x94ba9a7efa99b2a4dbc3a6188f1536e723f4970316f70a88149a35df31eee70e"; // O el que retorne el upstream
+
+        async function enviarTaskingOrder() {
+            const data = {
+                client_did: "did:axioma:node-moron-01",
+                x509_signature: "SIG_RSA_SHA256_WEB_VERONICA_ARAPIAN_4.0",
+                target_polygon: "POLYGON((-58.62 -34.65, -58.60 -34.65, -58.60 -34.67, -58.62 -34.67, -58.62 -34.65))",
+                sensor_type: "SAR",
+                resolution_meters: 1.5
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/upstream/petrify-order/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const resultado = await response.json();
+                document.getElementById('resultado-upstream').innerText = JSON.stringify(resultado, null, 2);
+                
+                // Guardamos dinámicamente el hash generado para usarlo en el downstream
+                if (resultado.tasking_hash) {
+                    taskingHashGlobal = resultado.tasking_hash;
+                }
+            } catch (error) {
+                document.getElementById('resultado-upstream').innerText = "Error: " + error;
+            }
+        }
+
+        async function enviarDownstream() {
+            const inputArchivo = document.getElementById('archivoGeo');
+            if (inputArchivo.files.length === 0) {
+                alert("Por favor selecciona un archivo primero.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", inputArchivo.files[0]);
+
+            try {
+                const response = await fetch(`${API_URL}/downstream/ingest-ground-station/`, {
+                    method: 'POST',
+                    headers: {
+                        'tasking-hash': taskingHashGlobal,
+                        'ground-station-id': 'GROUND_STATION_MORON_01'
+                    },
+                    body: formData
+                });
+                const resultado = await response.json();
+                document.getElementById('resultado-downstream').innerText = JSON.stringify(resultado, null, 2);
+            } catch (error) {
+                document.getElementById('resultado-downstream').innerText = "Error: " + error;
+            }
+        }
+    </script>
+
+</body>
+</html>
