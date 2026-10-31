@@ -1,15 +1,17 @@
 import os
 from fastapi import FastAPI, HTTPException, UploadFile, File, Header
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import hashlib
 import datetime
 import uuid
 import requests
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
-app = FastAPI(title="VERTEX AXIOMA - Nodo Satelital 4.0")
+app = FastAPI(
+    title="VERTEX AXIOMA® - Módulo Satelital & Ingesta Geoespacial 4.0",
+    description="API de petrificación para órdenes Upstream (Tasking Orders) e ingesta Downstream (Ground Station) bajo el Sello de Inmutabilidad Transfronteriza.",
+    version="4.0.0"
+)
 
 # Configurar middleware de CORS para permitir solicitudes web
 app.add_middleware(
@@ -18,11 +20,6 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-
-app = FastAPI(
-    title="VERTEX AXIOMA® - Módulo Satelital & Ingesta Geoespacial 4.0",
-    description="API de petrificación para órdenes Upstream (Tasking Orders) e ingesta Downstream (Ground Station) bajo el Sello de Inmutabilidad Transfronteriza.",
-    version="4.0.0"
 )
 
 # Configuración de variables de entorno (Supabase)
